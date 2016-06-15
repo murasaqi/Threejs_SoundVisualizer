@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - interactive lines</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				font-family: Monospace;
+				background-color: #f0f0f0;
+				margin: 0px;
+				overflow: hidden;
+			}
+			.audio {
+					position: absolute;
+					right : 0;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="audio">
+			<div id="audioControl">
+				<audio id="audio" crossorigin="anonymous" style="vertical-align: middle;" controls autobuffer></audio>
+			</div>
+		  <div style="padding:8px;">
+		    <a id="sound_info" herf="#" target="_blank" style="margin:0;paddin:0;color:#fff;"></a>
+		  </div>
+		</div>
+
+		<script>
+		// ここにSoundCloudのIDとトラックのURLを入れるんじゃ
+		var CLIENT_ID = 'XXXXXXXXXX';
+		var TRACK_URL = 'https://soundcloud.com/xxxxxxxx/xxxxxxxxx';
+		var analyser;
+		var bytes;
+		var isAnalise = false;
+		</script>
+		<script src="build/three.js"></script>
+		<script src="js/controls/TrackballControls.js"></script>
+		<script src="js/libs/stats.min.js"></script>
+		<script src="//connect.soundcloud.com/sdk.js"></script>
+		<script src="perlin.js"></script>
+		<script src="js/libs/dat.gui.min.js"></script>
+		<script>
+
+		SC.initialize({
+		  client_id: CLIENT_ID
+		});
+		// get the sound info
+		SC.get('/resolve', {url: TRACK_URL}, function(sound){
+		  if(sound.errors){
+		    // error occur
+		    for(var i = 0; i < sound.errors.length; i++){
+		      console.log(sound.errors[i].error_message);
+		    }
+		    return;
+		  }
+		  // succeed in getting the sound info
+		  console.log(sound);
+
+
+		  // set the stream url to the audio element
+		  var audio = document.getElementById('audio');
+		  var streamUrl = sound.stream_url + '?client_id=' + CLIENT_ID;
+		  audio.setAttribute('src', streamUrl);
+
+		  // create and setup an analyser
+		  var audioCtx = new (window.AudioContext || window.webkitAudioContext);
+		  analyser = audioCtx.createAnalyser();
+		  analyser.fftSize = 256;
+		  var source = audioCtx.createMediaElementSource(audio);
+		  source.connect(analyser);
+		  analyser.connect(audioCtx.destination);
+
+		  // make a sketch
+		  // var CANVAS_WIDTH = window.innerWidth - 32;
+		  // var CANVAS_HEIGHT = window.innerHeight - 72;
+		  // var $p = new Processing(document.getElementById('canvas'));
+			//
+		  // $p.setup = function(){
+		  //   $p.frameRate(32);
+		  //   $p.noLoop();
+		  //   $p.background(0); // prevet white flash at the start of rendering
+		  //   $p.size(CANVAS_WIDTH, CANVAS_HEIGHT);
+		  // };
+			//
+		  bytes = new Uint8Array(analyser.frequencyBinCount);
+			isAnalise = true;
+			analyser.getByteFrequencyData(bytes);
+		  // var UNIT_COUNT = 80;
+		  // var UNIT_HEIGHT = Math.round(CANVAS_HEIGHT / 256); // round to align bars
+		  // var UNIT_WIDTH = Math.round(CANVAS_WIDTH / UNIT_COUNT); // round to align bars
+			//
+		  // $p.draw = function(){
+		  //   analyser.getByteFrequencyData(bytes);
+		  //   $p.background(0);
+		  //   $p.stroke(255);
+		  //   $p.fill(255);
+		  //   for(var i = 0; i < UNIT_COUNT; i++){
+		  //     $p.rect((i * UNIT_WIDTH), CANVAS_HEIGHT, (UNIT_WIDTH - 2), -(bytes[i] * UNIT_HEIGHT));
+		  //   }
+		  // };
+			//
+		  // // start rendering
+		  // $p.setup();
+		  // $p.loop();
+
+		  document.getElementById('sound_info').innerHTML = sound.title;
+		  document.getElementById('sound_info').setAttribute('href', sound.permalink_url);
+		});
+		</script>
+		<script src="noise_study.js"></script>
+
+	</body>
+</html>
